@@ -1,19 +1,17 @@
 package main
 
 import (
-	"bufio"
 	"errors"
 	"fmt"
-	//"io/ioutil"
 	"os"
 	"strconv"
-	"strings"
 	"sort"
 	"time"
 	"io/ioutil"
+	"bufio"
+	"io"
 )
 
-const TARGET = "Swap:"
 const FORMAT = "%5d %9s %s\n"
 
 type swap_info struct {
@@ -113,7 +111,7 @@ func getSwapFor(info *swap_info) (err error) {
 		return
 	}
 
-	size := getSwapSize(bufio.NewScanner(f))
+	size := getSwapSize(f)
 
 	if size == 0 {
 		return errors.New("wrap 0")
@@ -124,16 +122,19 @@ func getSwapFor(info *swap_info) (err error) {
 	return
 }
 
-var warp_string_buf string
-
-func getSwapSize(r *bufio.Scanner) (size int64) {
+func getSwapSize(r *os.File) (size int64) {
 	size = 0
-	for r.Scan(){
-		warp_string_buf = r.Text()
-		b := strings.HasPrefix(warp_string_buf, TARGET)
-		if b {
-			curr_warp_array := strings.Split(warp_string_buf, " ")
-			toint, _ := strconv.ParseInt(curr_warp_array[len(curr_warp_array)-2], 10, 0)
+	cr := bufio.NewReader(r)
+	for {
+		line, err := cr.ReadSlice('\n')
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			break
+		}
+		if (line[0] == 83 && line[1] == 119 && line[2] == 97 && line[3] == 112) {
+			toint, _ := strconv.ParseInt(string(line[23:24]), 10, 0)
 			size = size+toint
 		}
 	}
